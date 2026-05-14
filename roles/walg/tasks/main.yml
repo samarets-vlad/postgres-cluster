@@ -62,3 +62,10 @@
     job: "/usr/local/bin/pg-backup >> /var/log/pg-backup.log 2>&1"
     state: present
   when: inventory_hostname == groups['postgres'][0]
+
+- name: Run initial base backup (primary only)
+  command: /usr/local/bin/pg-backup
+  become_user: postgres
+  when: inventory_hostname == groups['postgres'][0]
+  register: initial_backup
+  changed_when: "'Backup completed successfully' in initial_backup.stdout"
