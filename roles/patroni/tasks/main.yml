@@ -35,7 +35,7 @@
 
 - name: Remove default data dir
   file:
-    path: /var/lib/postgresql/16/main
+    path: /var/lib/postgresql/{{ pg_version }}/main
     state: absent
 
 - name: Create Patroni config dir
@@ -75,3 +75,15 @@
     host: "{{ ansible_host }}"
     port: "{{ patroni_api_port }}"
     timeout: 60
+
+- name: Apply synchronous replication to Patroni DCS config
+  command: >
+    patronictl -c /etc/patroni/patroni.yml edit-config --force
+    -s synchronous_mode=true
+    -s synchronous_mode_strict=true
+  run_once: true
+  changed_when: false
+  retries: 5
+  delay: 5
+  register: patroni_dcs_config
+  until: patroni_dcs_config.rc == 0

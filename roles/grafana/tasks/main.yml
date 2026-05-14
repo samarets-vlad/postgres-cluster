@@ -40,3 +40,18 @@
     enabled: yes
     state: started
     daemon_reload: yes
+
+- name: Wait for Grafana to be ready
+  wait_for:
+    host: 127.0.0.1
+    port: 3000
+    timeout: 30
+
+- name: Reset Grafana admin password
+  command: >
+    grafana cli
+    --homepath /usr/share/grafana
+    --config /etc/grafana/grafana.ini
+    admin reset-admin-password {{ grafana_admin_password }}
+  changed_when: false
+  no_log: true
