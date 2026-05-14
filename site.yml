@@ -28,3 +28,16 @@
   become: true
   roles:
     - haproxy
+
+- name: "Step 6 — Monitoring (postgres_exporter)"
+  hosts: postgres
+  become: true
+  roles:
+    - postgres_exporter
+
+- name: "Step 7 — Monitoring (Prometheus + Grafana)"
+  hosts: haproxy
+  become: true
+  roles:
+    - prometheus
+    - grafana

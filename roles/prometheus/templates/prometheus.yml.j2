@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'postgres_exporter'
+    static_configs:
+      - targets:
+{% for host in groups['postgres'] %}
+          - '{{ hostvars[host]['ansible_host'] }}:9187'
+{% endfor %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  - job_name: 'patroni'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+{% for host in groups['postgres'] %}
+          - '{{ hostvars[host]['ansible_host'] }}:8008'
+{% endfor %}
