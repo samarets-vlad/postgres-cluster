@@ -1,0 +1,19 @@
+{
+  "WALG_S3_PREFIX": "s3://{{ minio_bucket }}/{{ patroni_scope }}",
+  "AWS_ACCESS_KEY_ID": "{{ minio_root_user }}",
+  "AWS_SECRET_ACCESS_KEY": "{{ minio_root_password }}",
+  "AWS_ENDPOINT": "http://{{ hostvars[groups['haproxy'][0]]['ansible_host'] }}:9000",
+  "AWS_S3_FORCE_PATH_STYLE": "true",
+  "AWS_REGION": "us-east-1",
+  "WALG_COMPRESSION_METHOD": "brotli",
+  "WALG_DELTA_MAX_STEPS": "6",
+  "WALG_DELTA_ORIGIN": "LATEST_FULL",
+  "WALG_UPLOAD_CONCURRENCY": "4",
+  "WALG_DOWNLOAD_CONCURRENCY": "4",
+  "WALG_PREVENT_WAL_OVERWRITE": "true",
+  "PGDATA": "/var/lib/postgresql/{{ pg_version }}/main",
+  "PGHOST": "/var/run/postgresql",
+  "PGPORT": "5432",
+  "PGUSER": "{{ pg_superuser }}",
+  "PGPASSWORD": "{{ pg_superuser_password }}"
+}

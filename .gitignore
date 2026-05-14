@@ -1,0 +1,11 @@
+*.retry
+*.log
+.vagrant/
+__pycache__/
+*.pyc
+.env
+# Ansible vault password file - NEVER commit this
+.vault_pass
+.vault_pass.txt
+# Unencrypted vault - NEVER commit this
+group_vars/vault.yml

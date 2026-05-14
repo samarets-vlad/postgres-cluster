@@ -1,0 +1,37 @@
+---
+pg_version: 16
+etcd_cluster_name: pg-lab
+patroni_scope: pg-lab
+patroni_namespace: /db/
+
+# PostgreSQL users (passwords in vault.yml)
+pg_superuser: postgres
+pg_admin_user: admin
+pg_replicator_user: replicator
+
+pg_superuser_password: "{{ vault_pg_superuser_password }}"
+pg_admin_password: "{{ vault_pg_admin_password }}"
+pg_replicator_password: "{{ vault_pg_replicator_password }}"
+
+# pgBouncer
+pgbouncer_port: 6432
+
+# Patroni API
+patroni_api_port: 8008
+
+# HAProxy
+haproxy_write_port: 5000
+haproxy_read_port: 5001
+haproxy_stats_port: 7000
+haproxy_stats_user: admin
+haproxy_stats_password: "{{ vault_haproxy_stats_password }}"
+
+# MinIO / WAL-G
+minio_bucket: pg-backups
+minio_root_user: "{{ vault_minio_root_user }}"
+minio_root_password: "{{ vault_minio_root_password }}"
+
+# Grafana
+grafana_admin_user: admin
+grafana_admin_password: "{{ vault_grafana_admin_password }}"
+grafana_secret_key: "{{ vault_grafana_secret_key }}"

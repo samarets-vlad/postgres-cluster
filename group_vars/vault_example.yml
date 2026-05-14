@@ -1,0 +1,15 @@
+---
+# Copy this file to group_vars/vault.yml and encrypt with:
+#   ansible-vault encrypt group_vars/vault.yml
+#
+# Then reference secrets in all.yml as:
+#   pg_superuser_password: "{{ vault_pg_superuser_password }}"
+
+vault_pg_superuser_password: postgres123
+vault_pg_admin_password: admin123
+vault_pg_replicator_password: replicator123
+vault_haproxy_stats_password: haproxy123
+vault_minio_root_user: minioadmin
+vault_minio_root_password: minioadmin123
+vault_grafana_admin_password: grafana123
+vault_grafana_secret_key: SuPerSeCrEtKey1234567890abcdef12

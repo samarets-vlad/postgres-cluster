@@ -1,0 +1,55 @@
+---
+- name: "Step 1 — Common setup"
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: "Step 2 — etcd cluster"
+  hosts: etcd
+  become: true
+  roles:
+    - etcd
+
+- name: "Step 3 — PostgreSQL + Patroni"
+  hosts: postgres
+  become: true
+  roles:
+    - patroni
+
+- name: "Step 4 — pgBouncer"
+  hosts: postgres
+  become: true
+  roles:
+    - pgbouncer
+
+- name: "Step 5 — HAProxy"
+  hosts: haproxy
+  become: true
+  roles:
+    - haproxy
+
+- name: "Step 6 — Monitoring (postgres_exporter)"
+  hosts: postgres
+  become: true
+  roles:
+    - postgres_exporter
+
+- name: "Step 7 — Monitoring (Prometheus + Grafana)"
+  hosts: haproxy
+  become: true
+  roles:
+    - prometheus
+    - grafana
+
+- name: "Step 8 — MinIO (backup storage)"
+  hosts: haproxy
+  become: true
+  roles:
+    - minio
+
+- name: "Step 9 — WAL-G (backup agent)"
+  hosts: postgres
+  become: true
+  roles:
+    - walg

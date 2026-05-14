@@ -1,0 +1,27 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install base packages
+  apt:
+    name:
+      - curl
+      - wget
+      - gnupg2
+      - python3-pip
+      - python3-psycopg2
+      - net-tools
+      - vim
+      - htop
+    state: present
+
+- name: Fill /etc/hosts
+  blockinfile:
+    path: /etc/hosts
+    marker: "# {mark} pg-lab"
+    block: |
+      192.168.56.10  haproxy
+      192.168.56.11  pg1
+      192.168.56.12  pg2

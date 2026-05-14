@@ -1,0 +1,29 @@
+---
+- name: Install pgBouncer
+  apt:
+    name: pgbouncer
+    state: present
+
+- name: Deploy pgBouncer config
+  template:
+    src: pgbouncer.ini.j2
+    dest: /etc/pgbouncer/pgbouncer.ini
+    owner: postgres
+    group: postgres
+    mode: '0640'
+  notify: restart pgbouncer
+
+- name: Deploy userlist
+  template:
+    src: userlist.txt.j2
+    dest: /etc/pgbouncer/userlist.txt
+    owner: postgres
+    group: postgres
+    mode: '0640'
+  notify: restart pgbouncer
+
+- name: Start pgBouncer
+  systemd:
+    name: pgbouncer
+    enabled: yes
+    state: started

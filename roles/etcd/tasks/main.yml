@@ -1,0 +1,81 @@
+---
+- name: Install etcd dependencies
+  apt:
+    name:
+      - wget
+      - tar
+    state: present
+
+- name: Download etcd binary
+  get_url:
+    url: "https://github.com/etcd-io/etcd/releases/download/v3.5.13/etcd-v3.5.13-linux-amd64.tar.gz"
+    dest: /tmp/etcd.tar.gz
+    mode: '0644'
+
+- name: Extract etcd
+  unarchive:
+    src: /tmp/etcd.tar.gz
+    dest: /tmp/
+    remote_src: yes
+
+- name: Copy etcd binaries
+  copy:
+    src: "/tmp/etcd-v3.5.13-linux-amd64/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    mode: '0755'
+    remote_src: yes
+  loop:
+    - etcd
+    - etcdctl
+
+- name: Create etcd user
+  user:
+    name: etcd
+    system: yes
+    shell: /sbin/nologin
+
+- name: Create etcd data dir
+  file:
+    path: /var/lib/etcd
+    state: directory
+    owner: etcd
+    group: etcd
+    mode: '0700'
+
+- name: Deploy etcd config
+  template:
+    src: etcd.conf.j2
+    dest: /etc/default/etcd
+  notify: restart etcd
+
+- name: Deploy etcd systemd service
+  copy:
+    dest: /etc/systemd/system/etcd.service
+    content: |
+      [Unit]
+      Description=etcd key-value store
+      After=network.target
+
+      [Service]
+      User=etcd
+      EnvironmentFile=/etc/default/etcd
+      ExecStart=/usr/local/bin/etcd
+      Restart=on-failure
+      RestartSec=5s
+
+      [Install]
+      WantedBy=multi-user.target
+  notify: restart etcd
+
+- name: Start etcd
+  systemd:
+    name: etcd
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for etcd port
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: 2379
+    timeout: 30

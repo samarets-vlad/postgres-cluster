@@ -1,0 +1,58 @@
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    maxconn 100000
+    user haproxy
+    group haproxy
+    daemon
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+
+defaults
+    log     global
+    mode    tcp
+    option  tcplog
+    option  dontlognull
+    timeout connect 5s
+    timeout client  10m
+    timeout server  10m
+    timeout check   5s
+    retries 3
+    maxconn 50000
+
+listen stats
+    bind *:{{ haproxy_stats_port }}
+    mode http
+    stats enable
+    stats uri /
+    stats refresh 5s
+    stats auth {{ haproxy_stats_user }}:{{ haproxy_stats_password }}
+    stats show-legends
+    stats show-node
+
+frontend pg_write
+    bind *:{{ haproxy_write_port }}
+    default_backend pg_primary
+    option tcplog
+
+backend pg_primary
+    option httpchk GET /primary
+    http-check expect status 200
+    default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+{% for host in groups['postgres'] %}
+    server {{ host }} {{ hostvars[host]['ansible_host'] }}:{{ pgbouncer_port }} check port {{ patroni_api_port }} maxconn 5000
+{% endfor %}
+
+frontend pg_read
+    bind *:{{ haproxy_read_port }}
+    default_backend pg_replicas
+    option tcplog
+
+backend pg_replicas
+    option httpchk GET /replica
+    http-check expect status 200
+    balance leastconn
+    default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+{% for host in groups['postgres'] %}
+    server {{ host }} {{ hostvars[host]['ansible_host'] }}:{{ pgbouncer_port }} check port {{ patroni_api_port }} maxconn 5000
+{% endfor %}

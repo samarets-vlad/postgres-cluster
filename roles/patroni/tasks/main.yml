@@ -1,0 +1,89 @@
+---
+- name: Add PostgreSQL apt key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add PostgreSQL repository
+  apt_repository:
+    repo: "deb http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+    filename: pgdg
+    state: present
+
+- name: Install PostgreSQL 16
+  apt:
+    name:
+      - postgresql-16
+      - postgresql-client-16
+    state: present
+    update_cache: yes
+
+- name: Install Patroni via pip with extra_args
+  pip:
+    name:
+      - patroni[etcd3]
+      - psycopg2-binary
+    state: present
+    extra_args: "--break-system-packages"
+
+- name: Stop default PostgreSQL
+  systemd:
+    name: postgresql
+    enabled: no
+    state: stopped
+  ignore_errors: yes
+
+- name: Remove default data dir
+  file:
+    path: /var/lib/postgresql/{{ pg_version }}/main
+    state: absent
+
+- name: Create Patroni config dir
+  file:
+    path: /etc/patroni
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0750'
+
+- name: Deploy Patroni config
+  template:
+    src: patroni.yml.j2
+    dest: /etc/patroni/patroni.yml
+    owner: postgres
+    group: postgres
+    mode: '0640'
+  notify: restart patroni
+
+- name: Deploy Patroni service
+  template:
+    src: patroni.service.j2
+    dest: /etc/systemd/system/patroni.service
+  notify:
+    - reload systemd
+    - restart patroni
+
+- name: Start Patroni
+  systemd:
+    name: patroni
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for Patroni API
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ patroni_api_port }}"
+    timeout: 60
+
+- name: Apply synchronous replication to Patroni DCS config
+  command: >
+    patronictl -c /etc/patroni/patroni.yml edit-config --force
+    -s synchronous_mode=true
+    -s synchronous_mode_strict=true
+  run_once: true
+  changed_when: false
+  retries: 5
+  delay: 5
+  register: patroni_dcs_config
+  until: patroni_dcs_config.rc == 0

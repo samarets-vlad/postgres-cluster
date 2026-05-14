@@ -1,0 +1,16 @@
+[Unit]
+Description=Prometheus PostgreSQL Exporter
+After=network.target patroni.service
+
+[Service]
+User=postgres_exporter
+Group=postgres_exporter
+EnvironmentFile=/etc/postgres_exporter.env
+ExecStart=/usr/local/bin/postgres_exporter \
+  --web.listen-address=0.0.0.0:9187 \
+  --web.telemetry-path=/metrics
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

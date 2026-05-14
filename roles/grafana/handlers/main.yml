@@ -1,0 +1,13 @@
+---
+- name: restart grafana
+  systemd:
+    name: grafana-server
+    state: restarted
+  listen: restart grafana
+
+- name: wait for grafana after restart
+  wait_for:
+    host: 127.0.0.1
+    port: 3000
+    timeout: 30
+  listen: restart grafana

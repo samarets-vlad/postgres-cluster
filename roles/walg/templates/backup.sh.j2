@@ -1,0 +1,20 @@
+#!/bin/bash
+set -e
+
+LOG_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+
+# Only run on Patroni leader
+IS_LEADER=$(patronictl -c /etc/patroni/patroni.yml list 2>/dev/null | grep "$(hostname)" | grep -c Leader || true)
+
+if [ "$IS_LEADER" -ne 1 ]; then
+  echo "[$LOG_DATE] Not a leader, skipping backup"
+  exit 0
+fi
+
+echo "[$LOG_DATE] Starting WAL-G base backup..."
+wal-g --config /etc/wal-g/walg.json backup-push /var/lib/postgresql/{{ pg_version }}/main
+echo "[$LOG_DATE] Backup completed successfully"
+
+# Retain last 7 full backups
+wal-g --config /etc/wal-g/walg.json delete retain FULL 7 --confirm
+echo "[$LOG_DATE] Old backups pruned, keeping last 7"
