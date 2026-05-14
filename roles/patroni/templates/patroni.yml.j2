@@ -23,6 +23,9 @@ bootstrap:
         wal_log_hints: "on"
         max_connections: 100
         shared_buffers: 256MB
+        archive_mode: "on"
+        archive_command: 'wal-g --config /etc/wal-g/walg.json wal-push %p'
+        archive_timeout: 60
 
   initdb:
     - encoding: UTF8

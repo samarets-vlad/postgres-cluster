@@ -36,15 +36,13 @@
     group: postgres
     mode: '0640'
 
-- name: Configure WAL archiving in Patroni
-  blockinfile:
-    path: /etc/patroni/patroni.yml
-    insertafter: "parameters:"
-    block: |
-        archive_mode: "on"
-        archive_command: 'wal-g --config /etc/wal-g/walg.json wal-push %p'
-        archive_timeout: 60
-    marker: "# {mark} WAL-G archiving"
+- name: Regenerate Patroni config with WAL-G archive settings
+  template:
+    src: ../../patroni/templates/patroni.yml.j2
+    dest: /etc/patroni/patroni.yml
+    owner: postgres
+    group: postgres
+    mode: '0640'
   notify: restart patroni
 
 - name: Deploy backup script
