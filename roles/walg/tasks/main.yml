@@ -1,7 +1,7 @@
 ---
 - name: Download WAL-G binary
   get_url:
-    url: "https://github.com/wal-g/wal-g/releases/download/v3.0.0/wal-g-pg-ubuntu-20.04-amd64.tar.gz"
+    url: "https://github.com/wal-g/wal-g/releases/download/v3.0.0/wal-g-pg-ubuntu-22.04-amd64.tar.gz"
     dest: /tmp/walg.tar.gz
     mode: '0644'
 
@@ -13,7 +13,7 @@
 
 - name: Install WAL-G binary
   copy:
-    src: /tmp/wal-g-pg-ubuntu-20.04-amd64
+    src: /tmp/wal-g-pg-ubuntu-22.04-amd64
     dest: /usr/local/bin/wal-g
     owner: root
     group: root
@@ -64,7 +64,10 @@
   when: inventory_hostname == groups['postgres'][0]
 
 - name: Run initial base backup (primary only)
-  command: sudo -u postgres /usr/local/bin/pg-backup
+  command: /usr/local/bin/pg-backup
+  become: true
+  become_method: su
+  become_user: postgres
   when: inventory_hostname == groups['postgres'][0]
   register: initial_backup
   changed_when: "'Backup completed successfully' in initial_backup.stdout"

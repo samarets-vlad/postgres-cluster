@@ -4,13 +4,10 @@ etcd_cluster_name: pg-lab
 patroni_scope: pg-lab
 patroni_namespace: /db/
 
-# PostgreSQL credentials
+# PostgreSQL users
 pg_superuser: postgres
-pg_superuser_password: postgres123
 pg_admin_user: admin
-pg_admin_password: admin123
 pg_replicator_user: replicator
-pg_replicator_password: replicator123
 
 # pgBouncer
 pgbouncer_port: 6432
@@ -23,14 +20,9 @@ haproxy_write_port: 5000
 haproxy_read_port: 5001
 haproxy_stats_port: 7000
 haproxy_stats_user: admin
-haproxy_stats_password: haproxy123
 
-# MinIO / WAL-G
-minio_root_user: minioadmin
-minio_root_password: minioadmin123
+# MinIO
 minio_bucket: pg-backups
 
 # Grafana
 grafana_admin_user: admin
-grafana_admin_password: grafana123
-grafana_secret_key: SuPerSeCrEtKey1234567890abcdef12

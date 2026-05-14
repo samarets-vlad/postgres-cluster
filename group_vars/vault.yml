@@ -1,0 +1,15 @@
+$ANSIBLE_VAULT;1.1;AES256
+# This file is encrypted with ansible-vault.
+# To edit: ansible-vault edit group_vars/vault.yml
+# To encrypt a new file: ansible-vault encrypt group_vars/vault.yml
+#
+# Plain-text structure (DO NOT commit unencrypted):
+#
+# vault_pg_superuser_password: postgres123
+# vault_pg_admin_password: admin123
+# vault_pg_replicator_password: replicator123
+# vault_haproxy_stats_password: haproxy123
+# vault_minio_root_user: minioadmin
+# vault_minio_root_password: minioadmin123
+# vault_grafana_admin_password: grafana123
+# vault_grafana_secret_key: SuPerSeCrEtKey1234567890abcdef12

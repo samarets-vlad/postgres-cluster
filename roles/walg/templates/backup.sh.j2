@@ -12,7 +12,7 @@ if [ "$IS_LEADER" -ne 1 ]; then
 fi
 
 echo "[$LOG_DATE] Starting WAL-G base backup..."
-wal-g --config /etc/wal-g/walg.json backup-push /var/lib/postgresql/16/main
+wal-g --config /etc/wal-g/walg.json backup-push /var/lib/postgresql/{{ pg_version }}/main
 echo "[$LOG_DATE] Backup completed successfully"
 
 # Retain last 7 full backups
