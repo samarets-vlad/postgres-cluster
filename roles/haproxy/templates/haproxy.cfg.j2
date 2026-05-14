@@ -1,0 +1,45 @@
+global
+    log /dev/log local0
+    maxconn 4096
+    user haproxy
+    group haproxy
+    daemon
+
+defaults
+    log     global
+    mode    tcp
+    option  tcplog
+    timeout connect 5s
+    timeout client  60s
+    timeout server  60s
+    retries 3
+
+listen stats
+    bind *:{{ haproxy_stats_port }}
+    mode http
+    stats enable
+    stats uri /
+    stats refresh 5s
+
+frontend pg_write
+    bind *:{{ haproxy_write_port }}
+    default_backend pg_primary
+
+backend pg_primary
+    option httpchk GET /primary
+    http-check expect status 200
+    default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+    server pg1 192.168.56.11:{{ pgbouncer_port }} check port {{ patroni_api_port }}
+    server pg2 192.168.56.12:{{ pgbouncer_port }} check port {{ patroni_api_port }}
+
+frontend pg_read
+    bind *:{{ haproxy_read_port }}
+    default_backend pg_replicas
+
+backend pg_replicas
+    option httpchk GET /replica
+    http-check expect status 200
+    balance roundrobin
+    default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
+    server pg1 192.168.56.11:{{ pgbouncer_port }} check port {{ patroni_api_port }}
+    server pg2 192.168.56.12:{{ pgbouncer_port }} check port {{ patroni_api_port }}

@@ -1,0 +1,12 @@
+[databases]
+* = host=127.0.0.1 port=5432
+
+[pgbouncer]
+listen_port = {{ pgbouncer_port }}
+listen_addr = 0.0.0.0
+auth_type = md5
+auth_file = /etc/pgbouncer/userlist.txt
+pool_mode = transaction
+max_client_conn = 500
+default_pool_size = 20
+admin_users = {{ pg_superuser }},{{ pg_admin_user }}

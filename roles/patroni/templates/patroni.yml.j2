@@ -1,0 +1,63 @@
+scope: {{ patroni_scope }}
+namespace: {{ patroni_namespace }}
+name: {{ inventory_hostname }}
+
+restapi:
+  listen: 0.0.0.0:{{ patroni_api_port }}
+  connect_address: {{ ansible_host }}:{{ patroni_api_port }}
+
+etcd3:
+  hosts: 192.168.56.11:2379,192.168.56.12:2379,192.168.56.10:2379
+
+bootstrap:
+  dcs:
+    ttl: 30
+    loop_wait: 10
+    retry_timeout: 10
+    maximum_lag_on_failover: 1048576
+    postgresql:
+      use_pg_rewind: true
+      parameters:
+        wal_level: replica
+        hot_standby: "on"
+        wal_log_hints: "on"
+        max_connections: 100
+        shared_buffers: 256MB
+
+  initdb:
+    - encoding: UTF8
+    - data-checksums
+
+  pg_hba:
+    - host replication {{ pg_replicator_user }} 192.168.56.0/24 md5
+    - host all all 0.0.0.0/0 md5
+    - local all all trust
+
+  users:
+    {{ pg_admin_user }}:
+      password: "{{ pg_admin_password }}"
+      options:
+        - createrole
+        - createdb
+    {{ pg_replicator_user }}:
+      password: "{{ pg_replicator_password }}"
+      options:
+        - replication
+
+postgresql:
+  listen: 0.0.0.0:5432
+  connect_address: {{ ansible_host }}:5432
+  data_dir: /var/lib/postgresql/16/main
+  bin_dir: /usr/lib/postgresql/16/bin
+  pgpass: /tmp/pgpass0
+  authentication:
+    replication:
+      username: {{ pg_replicator_user }}
+      password: {{ pg_replicator_password }}
+    superuser:
+      username: {{ pg_superuser }}
+      password: {{ pg_superuser_password }}
+
+tags:
+  nofailover: false
+  noloadbalance: false

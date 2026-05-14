@@ -1,0 +1,16 @@
+---
+pg_version: 16
+etcd_cluster_name: pg-lab
+patroni_scope: pg-lab
+patroni_namespace: /db/
+pg_superuser: postgres
+pg_superuser_password: postgres123
+pg_admin_user: admin
+pg_admin_password: admin123
+pg_replicator_user: replicator
+pg_replicator_password: replicator123
+pgbouncer_port: 6432
+patroni_api_port: 8008
+haproxy_write_port: 5000
+haproxy_read_port: 5001
+haproxy_stats_port: 7000
