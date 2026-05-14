@@ -1,0 +1,66 @@
+---
+- name: Download WAL-G binary
+  get_url:
+    url: "https://github.com/wal-g/wal-g/releases/download/v3.0.0/wal-g-pg-ubuntu-20.04-amd64.tar.gz"
+    dest: /tmp/walg.tar.gz
+    mode: '0644'
+
+- name: Extract WAL-G
+  unarchive:
+    src: /tmp/walg.tar.gz
+    dest: /tmp/
+    remote_src: yes
+
+- name: Install WAL-G binary
+  copy:
+    src: /tmp/wal-g-pg-ubuntu-20.04-amd64
+    dest: /usr/local/bin/wal-g
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: yes
+
+- name: Create WAL-G config directory
+  file:
+    path: /etc/wal-g
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0750'
+
+- name: Deploy WAL-G config
+  template:
+    src: walg.json.j2
+    dest: /etc/wal-g/walg.json
+    owner: postgres
+    group: postgres
+    mode: '0640'
+
+- name: Configure WAL archiving in Patroni
+  blockinfile:
+    path: /etc/patroni/patroni.yml
+    insertafter: "parameters:"
+    block: |
+        archive_mode: "on"
+        archive_command: 'wal-g --config /etc/wal-g/walg.json wal-push %p'
+        archive_timeout: 60
+    marker: "# {mark} WAL-G archiving"
+  notify: restart patroni
+
+- name: Deploy backup script
+  template:
+    src: backup.sh.j2
+    dest: /usr/local/bin/pg-backup
+    owner: postgres
+    group: postgres
+    mode: '0750'
+
+- name: Schedule daily base backup (primary only)
+  cron:
+    name: "WAL-G daily base backup"
+    user: postgres
+    hour: "2"
+    minute: "0"
+    job: "/usr/local/bin/pg-backup >> /var/log/pg-backup.log 2>&1"
+    state: present
+  when: inventory_hostname == groups['postgres'][0]

@@ -1,0 +1,13 @@
+{
+  "WALG_S3_PREFIX": "s3://{{ minio_bucket }}/{{ patroni_scope }}",
+  "AWS_ACCESS_KEY_ID": "{{ minio_root_user }}",
+  "AWS_SECRET_ACCESS_KEY": "{{ minio_root_password }}",
+  "AWS_ENDPOINT": "http://{{ hostvars[groups['haproxy'][0]]['ansible_host'] }}:9000",
+  "AWS_S3_FORCE_PATH_STYLE": "true",
+  "AWS_REGION": "us-east-1",
+  "PGDATA": "/var/lib/postgresql/16/main",
+  "PGHOST": "127.0.0.1",
+  "PGPORT": "5432",
+  "PGUSER": "{{ pg_superuser }}",
+  "PGPASSWORD": "{{ pg_superuser_password }}"
+}

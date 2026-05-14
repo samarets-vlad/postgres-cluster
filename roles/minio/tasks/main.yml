@@ -1,0 +1,73 @@
+---
+- name: Create MinIO user
+  user:
+    name: minio
+    system: yes
+    shell: /bin/false
+    create_home: no
+
+- name: Create MinIO directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: minio
+    group: minio
+    mode: '0750'
+  loop:
+    - /opt/minio
+    - /data/minio
+
+- name: Download MinIO binary
+  get_url:
+    url: "https://dl.min.io/server/minio/release/linux-amd64/minio"
+    dest: /usr/local/bin/minio
+    mode: '0755'
+
+- name: Download MinIO client (mc)
+  get_url:
+    url: "https://dl.min.io/client/mc/release/linux-amd64/mc"
+    dest: /usr/local/bin/mc
+    mode: '0755'
+
+- name: Deploy MinIO env file
+  template:
+    src: minio.env.j2
+    dest: /etc/minio.env
+    owner: minio
+    group: minio
+    mode: '0600'
+  notify: restart minio
+
+- name: Deploy MinIO systemd service
+  template:
+    src: minio.service.j2
+    dest: /etc/systemd/system/minio.service
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart minio
+
+- name: Start MinIO
+  systemd:
+    name: minio
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+- name: Wait for MinIO to be ready
+  wait_for:
+    host: 127.0.0.1
+    port: 9000
+    timeout: 30
+
+- name: Configure mc alias for local MinIO
+  command: >
+    mc alias set local
+    http://127.0.0.1:9000
+    {{ minio_root_user }}
+    {{ minio_root_password }}
+  changed_when: false
+
+- name: Create WAL-G bucket
+  command: mc mb --ignore-existing local/{{ minio_bucket }}
+  changed_when: false

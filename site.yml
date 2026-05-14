@@ -41,3 +41,15 @@
   roles:
     - prometheus
     - grafana
+
+- name: "Step 8 — MinIO (backup storage)"
+  hosts: haproxy
+  become: true
+  roles:
+    - minio
+
+- name: "Step 9 — WAL-G (backup agent)"
+  hosts: postgres
+  become: true
+  roles:
+    - walg

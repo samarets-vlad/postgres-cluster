@@ -14,3 +14,8 @@ patroni_api_port: 8008
 haproxy_write_port: 5000
 haproxy_read_port: 5001
 haproxy_stats_port: 7000
+
+# MinIO / WAL-G
+minio_root_user: minioadmin
+minio_root_password: minioadmin123
+minio_bucket: pg-backups
