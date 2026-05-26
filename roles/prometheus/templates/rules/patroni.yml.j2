@@ -1,0 +1,48 @@
+groups:
+  - name: patroni
+    rules:
+
+      - alert: PatroniLeaderMissing
+        expr: sum(patroni_master_mode) == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "No Patroni leader elected"
+          description: "The Patroni cluster '{{ patroni_scope }}' has no leader for more than 30 seconds — possible split-brain or quorum loss."
+
+      - alert: PatroniClusterUnhealthy
+        expr: patroni_postgres_running == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL not running on {{ $labels.instance }}"
+          description: "Patroni reports PostgreSQL is not running on {{ $labels.instance }}."
+
+      - alert: PatroniStandbyNotInSync
+        expr: patroni_is_replica == 1 and patroni_master_mode == 0 and patroni_postgres_streaming_is_sync == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sync standby not in sync on {{ $labels.instance }}"
+          description: "The synchronous standby {{ $labels.instance }} is not streaming in sync mode. With synchronous_mode_strict this blocks writes."
+
+      - alert: PatroniReplicationLagHigh
+        expr: patroni_replication_lag > 60
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Replication lag > 60s on {{ $labels.instance }}"
+          description: "Replica {{ $labels.instance }} is {{ $value }}s behind the primary."
+
+      - alert: PatroniEtcdUnhealthy
+        expr: patroni_dcs_last_seen > 60
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Patroni cannot reach etcd on {{ $labels.instance }}"
+          description: "Patroni on {{ $labels.instance }} has not updated DCS for {{ $value }}s — etcd may be down."

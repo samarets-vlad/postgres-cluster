@@ -1,0 +1,64 @@
+groups:
+  - name: postgresql
+    rules:
+
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL exporter cannot connect on {{ $labels.instance }}"
+          description: "postgres_exporter on {{ $labels.instance }} reports pg_up=0. The database is unreachable."
+
+      - alert: PostgresConnectionsNearLimit
+        expr: >
+          sum by (instance) (pg_stat_database_numbackends)
+          / on (instance)
+          pg_settings_max_connections
+          > 0.80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL connections above 80% on {{ $labels.instance }}"
+          description: "{{ $value | humanizePercentage }} of max_connections used on {{ $labels.instance }}."
+
+      - alert: PostgresReplicationLagCritical
+        expr: pg_replication_lag > 300
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Replication lag > 5 minutes on {{ $labels.instance }}"
+          description: "Replica {{ $labels.instance }} is {{ $value }}s behind the primary."
+
+      - alert: PostgresDeadlocksHigh
+        expr: rate(pg_stat_database_deadlocks[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High deadlock rate on {{ $labels.instance }}"
+          description: "{{ $value | humanize }} deadlocks/s on {{ $labels.instance }} over the last 5 minutes."
+
+      - alert: PostgresTransactionWrapAroundWarning
+        expr: pg_database_wraparound_warning_age_datfrozenxid > 0
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Transaction ID wraparound warning on {{ $labels.instance }}"
+          description: "Database {{ $labels.datname }} on {{ $labels.instance }} is approaching transaction ID wraparound. Run VACUUM FREEZE."
+
+      - alert: PostgresTableBloatHigh
+        expr: >
+          (pg_stat_user_tables_n_dead_tup
+          / (pg_stat_user_tables_n_live_tup + pg_stat_user_tables_n_dead_tup + 1))
+          > 0.20
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Table bloat > 20% on {{ $labels.instance }}/{{ $labels.relname }}"
+          description: "Table {{ $labels.schemaname }}.{{ $labels.relname }} on {{ $labels.instance }} has {{ $value | humanizePercentage }} dead tuples."

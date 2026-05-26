@@ -36,6 +36,15 @@
     group: postgres
     mode: '0640'
 
+- name: Create .pgpass for WAL-G (avoid PGPASSWORD in JSON)
+  copy:
+    content: "localhost:5432:*:{{ pg_superuser }}:{{ pg_superuser_password }}\n"
+    dest: /var/lib/postgresql/.pgpass
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  no_log: true
+
 - name: Regenerate Patroni config with WAL-G archive settings
   template:
     src: ../../patroni/templates/patroni.yml.j2

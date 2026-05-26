@@ -11,9 +11,10 @@
   "WALG_UPLOAD_CONCURRENCY": "4",
   "WALG_DOWNLOAD_CONCURRENCY": "4",
   "WALG_PREVENT_WAL_OVERWRITE": "true",
+  "WALG_LOG_LEVEL": "INFO",
   "PGDATA": "/var/lib/postgresql/{{ pg_version }}/main",
   "PGHOST": "/var/run/postgresql",
   "PGPORT": "5432",
   "PGUSER": "{{ pg_superuser }}",
-  "PGPASSWORD": "{{ pg_superuser_password }}"
+  "PGPASSFILE": "/var/lib/postgresql/.pgpass"
 }

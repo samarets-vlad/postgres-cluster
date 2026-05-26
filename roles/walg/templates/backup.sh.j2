@@ -1,20 +1,33 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 LOG_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+LOG_FILE=/var/log/pg-backup.log
+
+log() { echo "[$LOG_DATE] $*" | tee -a "$LOG_FILE"; }
 
 # Only run on Patroni leader
 IS_LEADER=$(patronictl -c /etc/patroni/patroni.yml list 2>/dev/null | grep "$(hostname)" | grep -c Leader || true)
 
 if [ "$IS_LEADER" -ne 1 ]; then
-  echo "[$LOG_DATE] Not a leader, skipping backup"
+  log "Not a leader, skipping backup"
   exit 0
 fi
 
-echo "[$LOG_DATE] Starting WAL-G base backup..."
-wal-g --config /etc/wal-g/walg.json backup-push /var/lib/postgresql/{{ pg_version }}/main
-echo "[$LOG_DATE] Backup completed successfully"
+log "Starting WAL-G base backup..."
 
-# Retain last 7 full backups
-wal-g --config /etc/wal-g/walg.json delete retain FULL 7 --confirm
-echo "[$LOG_DATE] Old backups pruned, keeping last 7"
+if ! WALG_LOG_LEVEL=INFO wal-g --config /etc/wal-g/walg.json backup-push \
+    /var/lib/postgresql/{{ pg_version }}/main >> "$LOG_FILE" 2>&1; then
+  log "ERROR: WAL-G backup-push FAILED (exit code $?)"
+  exit 1
+fi
+
+log "Backup completed successfully"
+
+# Retain last 7 full backups, delete associated WAL segments
+if ! wal-g --config /etc/wal-g/walg.json delete retain FULL 7 --confirm >> "$LOG_FILE" 2>&1; then
+  log "WARNING: WAL-G delete/retain step failed"
+  # Non-fatal: do not exit, backup itself succeeded
+fi
+
+log "Old backups pruned, keeping last 7"

@@ -1,12 +1,12 @@
 ---
-- name: Create prometheus user
+- name: Create Prometheus system user
   user:
     name: prometheus
     system: yes
-    shell: /bin/false
+    shell: /sbin/nologin
     create_home: no
 
-- name: Create prometheus directories
+- name: Create Prometheus directories
   file:
     path: "{{ item }}"
     state: directory
@@ -15,11 +15,12 @@
     mode: '0755'
   loop:
     - /etc/prometheus
+    - /etc/prometheus/rules
     - /var/lib/prometheus
 
 - name: Download Prometheus
   get_url:
-    url: "https://github.com/prometheus/prometheus/releases/download/v2.51.0/prometheus-2.51.0.linux-amd64.tar.gz"
+    url: "https://github.com/prometheus/prometheus/releases/download/v2.51.2/prometheus-2.51.2.linux-amd64.tar.gz"
     dest: /tmp/prometheus.tar.gz
     mode: '0644'
 
@@ -29,9 +30,9 @@
     dest: /tmp/
     remote_src: yes
 
-- name: Install prometheus binaries
+- name: Install Prometheus binaries
   copy:
-    src: "/tmp/prometheus-2.51.0.linux-amd64/{{ item }}"
+    src: "/tmp/prometheus-2.51.2.linux-amd64/{{ item }}"
     dest: "/usr/local/bin/{{ item }}"
     owner: root
     group: root
@@ -41,18 +42,7 @@
     - prometheus
     - promtool
 
-- name: Copy console libraries
-  copy:
-    src: "/tmp/prometheus-2.51.0.linux-amd64/{{ item }}"
-    dest: "/etc/prometheus/{{ item }}"
-    owner: prometheus
-    group: prometheus
-    remote_src: yes
-  loop:
-    - consoles
-    - console_libraries
-
-- name: Deploy prometheus config
+- name: Deploy Prometheus config
   template:
     src: prometheus.yml.j2
     dest: /etc/prometheus/prometheus.yml
@@ -61,16 +51,27 @@
     mode: '0644'
   notify: restart prometheus
 
-- name: Deploy prometheus systemd service
+- name: Deploy alert rules
+  template:
+    src: "rules/{{ item }}"
+    dest: "/etc/prometheus/rules/{{ item | replace('.j2', '') }}"
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  loop:
+    - patroni.yml.j2
+    - postgresql.yml.j2
+    - walg.yml.j2
+  notify: restart prometheus
+
+- name: Deploy Prometheus systemd service
   template:
     src: prometheus.service.j2
     dest: /etc/systemd/system/prometheus.service
     mode: '0644'
-  notify:
-    - reload systemd
-    - restart prometheus
+  notify: restart prometheus
 
-- name: Start prometheus
+- name: Start and enable Prometheus
   systemd:
     name: prometheus
     enabled: yes

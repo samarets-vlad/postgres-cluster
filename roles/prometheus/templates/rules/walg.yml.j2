@@ -1,0 +1,27 @@
+groups:
+  - name: walg_backup
+    rules:
+
+      - alert: WALGBackupMissing
+        # walg_backup_last_modified_seconds is a custom metric pushed via textfile collector.
+        # If no backup has been taken in the last 25 hours, fire.
+        expr: (time() - walg_last_backup_time_seconds) > 90000
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "WAL-G backup not taken in 25h on {{ $labels.instance }}"
+          description: >
+            The last successful WAL-G base backup on {{ $labels.instance }} was
+            {{ $value | humanizeDuration }} ago. Expected interval is 24h.
+            Check /var/log/pg-backup.log for errors.
+
+      - alert: WALGBackupJobFailed
+        # Exposed by node_exporter textfile collector — pg-backup.sh writes metric on failure
+        expr: walg_backup_last_exit_code != 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "WAL-G backup script exited non-zero on {{ $labels.instance }}"
+          description: "pg-backup on {{ $labels.instance }} exited with code {{ $value }}. Check /var/log/pg-backup.log."

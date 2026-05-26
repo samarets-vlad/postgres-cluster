@@ -7,7 +7,10 @@ restapi:
   connect_address: {{ ansible_host }}:{{ patroni_api_port }}
 
 etcd3:
-  hosts: 192.168.56.11:2379,192.168.56.12:2379,192.168.56.10:2379
+  hosts: >-
+    {% for host in groups['all'] -%}
+    {{ hostvars[host]['ansible_host'] }}:2379{% if not loop.last %},{% endif %}
+    {%- endfor %}
 
 bootstrap:
   dcs:
@@ -19,11 +22,14 @@ bootstrap:
     synchronous_mode_strict: true
     postgresql:
       use_pg_rewind: true
+      recovery_conf:
+        restore_command: 'wal-g --config /etc/wal-g/walg.json wal-fetch %f %p'
       parameters:
         wal_level: replica
         hot_standby: "on"
         wal_log_hints: "on"
-        max_connections: 100
+        # With pgBouncer in transaction mode, keep PG connections low
+        max_connections: 50
         shared_buffers: 256MB
         archive_mode: "on"
         archive_command: 'wal-g --config /etc/wal-g/walg.json wal-push %p'
