@@ -1,5 +1,7 @@
 # PostgreSQL HA Cluster
 
+> 🇺🇦 [Українська версія](README.uk.md)
+
 Production-grade PostgreSQL High Availability cluster deployed with Ansible.
 Built as a hands-on lab project demonstrating real-world infrastructure automation skills.
 The entire environment is provisioned locally with **Vagrant + VirtualBox** — no cloud account needed.
